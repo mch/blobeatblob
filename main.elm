@@ -13,16 +13,16 @@ import StartApp exposing (start)
 
 type alias Model =
   { windowSize : (Int, Int)
-  , blobPosition : (Int, Int)
+  , blobPosition : (Float, Float)
   }
 
-    
+
 type Action
   = WindowSize (Int, Int)
   | MousePosition (Int, Int)
   | Tick Float
 
-    
+
 init : (Model, Effects.Effects Action)
 init =
   ({ windowSize = (800, 600)
@@ -31,7 +31,7 @@ init =
   , Effects.none
   )
 
-    
+
 update : Action -> Model -> (Model, Effects.Effects Action)
 update action model =
   case action of
@@ -42,30 +42,37 @@ update action model =
 
 updateBlobPosition model mousePosition =
   let
+    blobSpeed = 0.1
     (wx, wy) = model.windowSize
     (mx, my) = mousePosition
+    -- corrected mouse position, mouse position in the collage coordinate system
+    (cmx, cmy) = (toFloat (mx - wx // 2), toFloat (wy // 2 - my))
     (bx, by) = model.blobPosition
+    (dx, dy) = (cmx - bx, cmy - by)
+    newbx = bx + blobSpeed * dx
+    newby = by + blobSpeed * dy
   in
-    { model | blobPosition = (mx - wx // 2, wy // 2 - my) }
+    { model | blobPosition = (newbx, newby) }
 
-      
+
 view : Signal.Address Action -> Model -> Html.Html
 view address model =
   let
     (wx, wy) = model.windowSize
-    (bx, by) = model.blobPosition
     blob = filled Color.red (circle 50)
-    translatedBlob = move (toFloat bx, toFloat by) blob
+    translatedBlob = move model.blobPosition blob
   in
     Html.fromElement (collage wx wy [translatedBlob])
 
 
+timer = Time.fps 30
+
 inputs =
   [ Signal.map WindowSize Window.dimensions
-  , Signal.map MousePosition Mouse.position
-  , Signal.map Tick (Time.fps 30)
+  , Signal.sampleOn timer (Signal.map MousePosition Mouse.position)
+  , Signal.map Tick timer
   ]
-        
+
 app =
     start { init = init
           , update = update
@@ -73,11 +80,11 @@ app =
           , inputs = inputs
           }
 
-      
+
 main =
     app.html
 
-       
+
 port tasks : Signal (Task.Task Effects.Never ())
 port tasks =
     app.tasks
