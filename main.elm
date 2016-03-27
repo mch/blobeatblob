@@ -1,8 +1,7 @@
 import Graphics.Collage exposing (..)
 import Color
-import Window
-import Mouse
 import Time
+import Keyboard
 
 import Effects
 import Html
@@ -17,10 +16,15 @@ type alias Model =
   }
 
 
+type alias Inputs =
+  { x : Int
+  , y : Int
+  , dt : Float
+  }
+
+
 type Action
-  = WindowSize (Int, Int)
-  | MousePosition (Int, Int)
-  | Tick Float
+  = Input Inputs
 
 
 init : (Model, Effects.Effects Action)
@@ -32,27 +36,21 @@ init =
   )
 
 
+noFx : Model -> (Model, Effects.Effects Action)
+noFx model =
+  ( model, Effects.none)
+
 update : Action -> Model -> (Model, Effects.Effects Action)
 update action model =
   case action of
-    WindowSize (wx, wy) -> ( { model | windowSize = (wx, wy) }, Effects.none)
-    MousePosition mp -> ( updateBlobPosition model mp, Effects.none)
-    Tick dt -> ( model, Effects.none)
+    Input inputs -> noFx (updateBlobPositionWithKeys model inputs)
 
 
-updateBlobPosition model mousePosition =
+updateBlobPositionWithKeys model keys =
   let
-    blobSpeed = 0.1
-    (wx, wy) = model.windowSize
-    (mx, my) = mousePosition
-    -- corrected mouse position, mouse position in the collage coordinate system
-    (cmx, cmy) = (toFloat (mx - wx // 2), toFloat (wy // 2 - my))
     (bx, by) = model.blobPosition
-    (dx, dy) = (cmx - bx, cmy - by)
-    newbx = bx + blobSpeed * dx
-    newby = by + blobSpeed * dy
   in
-    { model | blobPosition = (newbx, newby) }
+    { model | blobPosition = (bx + 10 * (toFloat keys.x), by + 10 * (toFloat keys.y)) }
 
 
 view : Signal.Address Action -> Model -> Html.Html
@@ -67,11 +65,14 @@ view address model =
 
 timer = Time.fps 30
 
+
 inputs =
-  [ Signal.map WindowSize Window.dimensions
-  , Signal.sampleOn timer (Signal.map MousePosition Mouse.position)
-  , Signal.map Tick timer
+  [ Signal.map Input (Signal.map3 Inputs
+                        (Signal.map .x Keyboard.wasd)
+                        (Signal.map .y Keyboard.wasd)
+                        timer)
   ]
+
 
 app =
     start { init = init
