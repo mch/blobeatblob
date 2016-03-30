@@ -9,10 +9,12 @@ import Signal
 import Task
 import StartApp exposing (start)
 
+import Food
 
 type alias Model =
   { windowSize : (Int, Int)
   , blobPosition : (Float, Float)
+  , food : List Food.Food
   }
 
 
@@ -31,6 +33,7 @@ init : (Model, Effects.Effects Action)
 init =
   ({ windowSize = (800, 600)
    , blobPosition = (0, 0)
+   , food = Food.init 800 600
    }
   , Effects.none
   )
@@ -59,8 +62,15 @@ view address model =
     (wx, wy) = model.windowSize
     blob = filled Color.red (circle 50)
     translatedBlob = move model.blobPosition blob
+    food = List.map drawFood model.food
   in
-    Html.fromElement (collage wx wy [translatedBlob])
+    Html.fromElement (collage wx wy (translatedBlob :: food))
+
+
+drawFood food =
+  circle 10
+    |> filled food.colour
+    |> move food.position
 
 
 timer = Time.fps 30
