@@ -1,5 +1,6 @@
-module Food (Food, init) where
+module Food (Food, init, view) where
 
+import Graphics.Collage exposing (..)
 import Random exposing (int, float, pair, list, map, generate, initialSeed)
 import Color
 
@@ -43,3 +44,21 @@ init width height =
     fillColourList = List.map int2lightcolour colourIndexList
   in
     List.map4 Food fillColourList outlineColourList pointList (List.repeat 20 10)
+
+
+view : List Food -> List Form
+view food =
+  List.map drawFood food
+
+
+drawFood : Food -> Form
+drawFood food =
+  let
+    outer = circle food.size
+          |> filled food.outlineColour
+          |> move food.position
+    inner = circle (food.size - 2)
+            |> filled food.fillColour
+            |> move food.position
+  in
+    group [outer, inner]

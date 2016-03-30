@@ -74,21 +74,9 @@ view address model =
     (wx, wy) = model.windowSize
     blob = filled Color.red (circle model.blob.size)
     translatedBlob = move model.blob.position blob
-    food = List.map drawFood model.food
+    food = Food.view model.food
   in
     Html.fromElement (collage wx wy (translatedBlob :: food))
-
-
-drawFood food =
-  let
-    outer = circle food.size
-          |> filled food.outlineColour
-          |> move food.position
-    inner = circle (food.size - 2)
-            |> filled food.fillColour
-            |> move food.position
-  in
-    group [outer, inner]
 
 
 timer = Time.fps 30
