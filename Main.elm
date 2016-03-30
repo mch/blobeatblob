@@ -14,6 +14,7 @@ import Food
 
 type alias Blob =
   { position : (Float, Float)
+  , size : Float
   }
 
 
@@ -38,7 +39,7 @@ type Action
 init : (Model, Effects.Effects Action)
 init =
   ({ windowSize = (800, 600)
-   , blob = Blob (0, 0)
+   , blob = Blob (0, 0) 50
    , food = Food.init 800 600
    }
   , Effects.none
@@ -57,16 +58,21 @@ update action model =
 
 updateBlobPositionWithKeys model keys =
   let
-    (bx, by) = model.blob.position
+    blob = model.blob
+    (bx, by) = blob.position
+    newX = bx + 10 * (toFloat keys.x)
+    newY = by + 10 * (toFloat keys.y)
+    newBlob = { blob | position = (newX, newY) }
   in
-    { model | blob = Blob (bx + 10 * (toFloat keys.x), by + 10 * (toFloat keys.y)) }
+    { model | blob = newBlob }
+
 
 
 view : Signal.Address Action -> Model -> Html.Html
 view address model =
   let
     (wx, wy) = model.windowSize
-    blob = filled Color.red (circle 50)
+    blob = filled Color.red (circle model.blob.size)
     translatedBlob = move model.blob.position blob
     food = List.map drawFood model.food
   in
@@ -75,10 +81,10 @@ view address model =
 
 drawFood food =
   let
-    outer = circle 10
+    outer = circle food.size
           |> filled food.outlineColour
           |> move food.position
-    inner = circle 8
+    inner = circle (food.size - 2)
             |> filled food.fillColour
             |> move food.position
   in

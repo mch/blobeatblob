@@ -8,6 +8,7 @@ type alias Food =
   { fillColour : Color.Color
   , outlineColour : Color.Color
   , position : (Float, Float)
+  , size : Float
   }
 
 
@@ -41,4 +42,4 @@ init width height =
     outlineColourList = List.map int2darkcolour colourIndexList
     fillColourList = List.map int2lightcolour colourIndexList
   in
-    List.map3 Food fillColourList outlineColourList pointList
+    List.map4 Food fillColourList outlineColourList pointList (List.repeat 20 10)
