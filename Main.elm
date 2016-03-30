@@ -50,12 +50,14 @@ noFx : Model -> (Model, Effects.Effects Action)
 noFx model =
   ( model, Effects.none)
 
+
 update : Action -> Model -> (Model, Effects.Effects Action)
 update action model =
   case action of
     Input inputs -> noFx (updateBlobPositionWithKeys model inputs)
 
 
+updateBlobPositionWithKeys : Model -> Inputs -> Model
 updateBlobPositionWithKeys model keys =
   let
     blob = model.blob
@@ -79,9 +81,11 @@ view address model =
     Html.fromElement (collage wx wy (translatedBlob :: food))
 
 
+timer : Signal Time.Time
 timer = Time.fps 30
 
 
+inputs : List (Signal Action)
 inputs =
   [ Signal.map Input (Signal.map3 Inputs
                         (Signal.map .x Keyboard.wasd)
@@ -90,6 +94,7 @@ inputs =
   ]
 
 
+app : StartApp.App Model
 app =
     start { init = init
           , update = update
@@ -98,6 +103,7 @@ app =
           }
 
 
+main : Signal Html.Html
 main =
     app.html
 
