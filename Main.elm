@@ -16,7 +16,7 @@ import Blob
 type alias Model =
   { windowSize : (Int, Int)
   , blob : Blob.Blob
-  , food : List Food.Food
+  , food : Food.Food
   , score : Int
   }
 
@@ -83,8 +83,10 @@ detectCollisions model =
     (bx, by) = model.blob.position
     distance (fx, fy) = sqrt ((bx-fx)^2 + (by-fy)^2)
     didCollide f = (distance f.position) > (f.size + model.blob.size)
-    newFood = List.filter didCollide model.food
-    points = (List.length model.food) - (List.length newFood)
+    newParticles = List.filter didCollide model.food.particles
+    food = model.food
+    newFood = { food | particles = newParticles }
+    points = (List.length model.food.particles) - (List.length newParticles)
     blob = model.blob
     newBlob = { blob | size = blob.size + (toFloat points) }
   in

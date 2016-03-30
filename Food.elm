@@ -1,11 +1,17 @@
 module Food (Food, init, view) where
 
 import Graphics.Collage exposing (..)
-import Random exposing (int, float, pair, list, map, generate, initialSeed)
+import Random exposing (..)
 import Color
 
 
 type alias Food =
+  { seed : Seed
+  , particles : List FoodParticle
+  }
+
+
+type alias FoodParticle =
   { fillColour : Color.Color
   , outlineColour : Color.Color
   , position : (Float, Float)
@@ -31,7 +37,7 @@ int2darkcolour i =
     _ -> Color.darkBlue
 
 
-init : Float -> Float -> List Food
+init : Float -> Float -> Food
 init width height =
   let
     xgen = float (-1 * width/2) (width/2)
@@ -42,23 +48,24 @@ init width height =
     (colourIndexList, seed'') = generate (list 20 <| int 1 4) seed'
     outlineColourList = List.map int2darkcolour colourIndexList
     fillColourList = List.map int2lightcolour colourIndexList
+    particles = List.map4 FoodParticle fillColourList outlineColourList pointList (List.repeat 20 10)
   in
-    List.map4 Food fillColourList outlineColourList pointList (List.repeat 20 10)
+    Food seed'' particles
 
 
-view : List Food -> List Form
+view : Food -> List Form
 view food =
-  List.map drawFood food
+  List.map drawParticle food.particles
 
 
-drawFood : Food -> Form
-drawFood food =
+drawParticle : FoodParticle -> Form
+drawParticle particle =
   let
-    outer = circle food.size
-          |> filled food.outlineColour
-          |> move food.position
-    inner = circle (food.size - 2)
-            |> filled food.fillColour
-            |> move food.position
+    outer = circle particle.size
+          |> filled particle.outlineColour
+          |> move particle.position
+    inner = circle (particle.size - 2)
+            |> filled particle.fillColour
+            |> move particle.position
   in
     group [outer, inner]
