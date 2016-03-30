@@ -11,9 +11,15 @@ import StartApp exposing (start)
 
 import Food
 
+
+type alias Blob =
+  { position : (Float, Float)
+  }
+
+
 type alias Model =
   { windowSize : (Int, Int)
-  , blobPosition : (Float, Float)
+  , blob : Blob
   , food : List Food.Food
   }
 
@@ -32,7 +38,7 @@ type Action
 init : (Model, Effects.Effects Action)
 init =
   ({ windowSize = (800, 600)
-   , blobPosition = (0, 0)
+   , blob = Blob (0, 0)
    , food = Food.init 800 600
    }
   , Effects.none
@@ -51,9 +57,9 @@ update action model =
 
 updateBlobPositionWithKeys model keys =
   let
-    (bx, by) = model.blobPosition
+    (bx, by) = model.blob.position
   in
-    { model | blobPosition = (bx + 10 * (toFloat keys.x), by + 10 * (toFloat keys.y)) }
+    { model | blob = Blob (bx + 10 * (toFloat keys.x), by + 10 * (toFloat keys.y)) }
 
 
 view : Signal.Address Action -> Model -> Html.Html
@@ -61,16 +67,22 @@ view address model =
   let
     (wx, wy) = model.windowSize
     blob = filled Color.red (circle 50)
-    translatedBlob = move model.blobPosition blob
+    translatedBlob = move model.blob.position blob
     food = List.map drawFood model.food
   in
     Html.fromElement (collage wx wy (translatedBlob :: food))
 
 
 drawFood food =
-  circle 10
-    |> filled food.colour
-    |> move food.position
+  let
+    outer = circle 10
+          |> filled food.outlineColour
+          |> move food.position
+    inner = circle 8
+            |> filled food.fillColour
+            |> move food.position
+  in
+    group [outer, inner]
 
 
 timer = Time.fps 30
