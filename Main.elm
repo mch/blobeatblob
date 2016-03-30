@@ -10,17 +10,12 @@ import Task
 import StartApp exposing (start)
 
 import Food
-
-
-type alias Blob =
-  { position : (Float, Float)
-  , size : Float
-  }
+import Blob
 
 
 type alias Model =
   { windowSize : (Int, Int)
-  , blob : Blob
+  , blob : Blob.Blob
   , food : List Food.Food
   , score : Int
   }
@@ -39,9 +34,14 @@ type Action
 
 init : (Model, Effects.Effects Action)
 init =
-  ({ windowSize = (800, 600)
-   , blob = Blob (0, 0) 50
-   , food = Food.init 800 600
+  let
+    windowWidth = 800
+    windowHeight = 600
+    startingSize = 11
+  in
+  ({ windowSize = (windowWidth, windowHeight)
+   , blob = Blob.Blob (0, 0) startingSize
+   , food = Food.init windowWidth windowHeight
    , score = 0
    }
   , Effects.none
@@ -82,12 +82,16 @@ detectCollisions model =
   let
     (bx, by) = model.blob.position
     distance (fx, fy) = sqrt ((bx-fx)^2 + (by-fy)^2)
-    newFood = List.filter (\f -> (distance f.position) > (f.size + model.blob.size)) model.food
+    didCollide f = (distance f.position) > (f.size + model.blob.size)
+    newFood = List.filter didCollide model.food
     points = (List.length model.food) - (List.length newFood)
+    blob = model.blob
+    newBlob = { blob | size = blob.size + (toFloat points) }
   in
     { model
       | food = newFood
       , score = model.score + points
+      , blob = newBlob
     }
 
 
@@ -95,13 +99,12 @@ view : Signal.Address Action -> Model -> Html.Html
 view address model =
   let
     (wx, wy) = model.windowSize
-    blob = filled Color.red (circle model.blob.size)
-    translatedBlob = move model.blob.position blob
+    blob = Blob.view model.blob
     food = Food.view model.food
   in
     Html.div
           []
-          [ Html.fromElement (collage wx wy (translatedBlob :: food))
+          [ Html.fromElement (collage wx wy (blob :: food))
           , Html.p [] [Html.text ("Score: " ++ (toString model.score))]
           ]
 
