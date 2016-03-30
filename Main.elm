@@ -38,10 +38,11 @@ init =
     windowWidth = 800
     windowHeight = 600
     startingSize = 11
+    numFoodParticles = 20
   in
   ({ windowSize = (windowWidth, windowHeight)
    , blob = Blob.Blob (0, 0) startingSize
-   , food = Food.init windowWidth windowHeight
+   , food = Food.init windowWidth windowHeight numFoodParticles
    , score = 0
    }
   , Effects.none
@@ -61,8 +62,13 @@ update action model =
 
 updateModel : Model -> Inputs -> Model
 updateModel model inputs =
-  updateBlobPositionWithKeys model inputs
-    |> detectCollisions
+  let
+    newModel =
+      updateBlobPositionWithKeys model inputs
+        |> detectCollisions
+    newFood = Food.update newModel.food inputs.dt
+  in
+    { newModel | food = newFood }
 
 
 updateBlobPositionWithKeys : Model -> Inputs -> Model

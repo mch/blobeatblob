@@ -1,13 +1,18 @@
-module Food (Food, init, view) where
+module Food (Food, init, view, update) where
 
 import Graphics.Collage exposing (..)
 import Random exposing (..)
 import Color
+import Time
 
 
 type alias Food =
   { seed : Seed
   , particles : List FoodParticle
+  , maxNumParticles : Int
+  , width : Float
+  , height : Float
+  , addFoodState : Maybe Time.Time
   }
 
 
@@ -37,20 +42,54 @@ int2darkcolour i =
     _ -> Color.darkBlue
 
 
-init : Float -> Float -> Food
-init width height =
+init : Float -> Float -> Int -> Food
+init width height numParticles =
   let
-    xgen = float (-1 * width/2) (width/2)
-    ygen = float (-1 * height/2) (height/2)
-    pointgen = pair xgen ygen
+    -- TODO: take seed from a port to get current time.
     seed = initialSeed 1
-    (pointList, seed') = generate (list 20 pointgen) seed
-    (colourIndexList, seed'') = generate (list 20 <| int 1 4) seed'
+    food = Food seed [] numParticles width height Nothing
+  in
+    generateParticles food
+
+
+generateParticles : Food -> Food
+generateParticles food =
+  let
+    foodSize = 10
+    numParticles = food.maxNumParticles - (List.length food.particles)
+
+    xgen = float (-1 * food.width/2) (food.width/2)
+    ygen = float (-1 * food.height/2) (food.height/2)
+    pointgen = pair xgen ygen
+    (pointList, seed') = generate (list numParticles pointgen) food.seed
+    (colourIndexList, seed'') = generate (list numParticles <| int 1 4) seed'
     outlineColourList = List.map int2darkcolour colourIndexList
     fillColourList = List.map int2lightcolour colourIndexList
-    particles = List.map4 FoodParticle fillColourList outlineColourList pointList (List.repeat 20 10)
+    particles = List.map4 FoodParticle fillColourList outlineColourList pointList (List.repeat numParticles foodSize)
   in
-    Food seed'' particles
+    { food
+      | particles = particles ++ food.particles
+      , seed = seed''
+    }
+
+
+update : Food -> Time.Time -> Food
+update food dt =
+  case food.addFoodState of
+    Nothing ->
+      if List.length food.particles < 20 then
+        { food | addFoodState = Just 0 }
+      else
+        food
+
+    Just t ->
+      if t > Time.second then
+        let
+          newFood = generateParticles food
+        in
+          { newFood | addFoodState = Nothing }
+      else
+        { food | addFoodState = Just (t + dt) }
 
 
 view : Food -> List Form
