@@ -22,6 +22,7 @@ type alias Model =
   { windowSize : (Int, Int)
   , blob : Blob
   , food : List Food.Food
+  , score : Int
   }
 
 
@@ -41,6 +42,7 @@ init =
   ({ windowSize = (800, 600)
    , blob = Blob (0, 0) 50
    , food = Food.init 800 600
+   , score = 0
    }
   , Effects.none
   )
@@ -54,7 +56,13 @@ noFx model =
 update : Action -> Model -> (Model, Effects.Effects Action)
 update action model =
   case action of
-    Input inputs -> noFx (updateBlobPositionWithKeys model inputs)
+    Input inputs -> noFx (updateModel model inputs)
+
+
+updateModel : Model -> Inputs -> Model
+updateModel model inputs =
+  updateBlobPositionWithKeys model inputs
+    |> detectCollisions
 
 
 updateBlobPositionWithKeys : Model -> Inputs -> Model
@@ -69,6 +77,19 @@ updateBlobPositionWithKeys model keys =
     { model | blob = newBlob }
 
 
+detectCollisions : Model -> Model
+detectCollisions model =
+  let
+    (bx, by) = model.blob.position
+    distance (fx, fy) = sqrt ((bx-fx)^2 + (by-fy)^2)
+    newFood = List.filter (\f -> (distance f.position) > (f.size + model.blob.size)) model.food
+    points = (List.length model.food) - (List.length newFood)
+  in
+    { model
+      | food = newFood
+      , score = model.score + points
+    }
+
 
 view : Signal.Address Action -> Model -> Html.Html
 view address model =
@@ -78,7 +99,11 @@ view address model =
     translatedBlob = move model.blob.position blob
     food = Food.view model.food
   in
-    Html.fromElement (collage wx wy (translatedBlob :: food))
+    Html.div
+          []
+          [ Html.fromElement (collage wx wy (translatedBlob :: food))
+          , Html.p [] [Html.text ("Score: " ++ (toString model.score))]
+          ]
 
 
 timer : Signal Time.Time
