@@ -3,8 +3,9 @@ module Blob (Blob, view) where
 import Graphics.Collage exposing (..)
 import Color
 
+
 type alias Blob =
-  { position : (Float, Float)
+  { position : ( Float, Float )
   , size : Float
   }
 
