@@ -6,12 +6,13 @@ import Time
 import Keyboard
 import Effects
 import Html
+import Html.Events
 import Signal
 import Task
 import StartApp exposing (start)
 import Food
 import Blob
-
+import Json.Decode exposing ((:=), int, object2)
 
 type alias Model =
   { windowSize : ( Int, Int )
@@ -30,6 +31,7 @@ type alias Inputs =
 
 type Action
   = Input Inputs
+  | MouseMove (Int, Int)
 
 
 init : ( Model, Effects.Effects Action )
@@ -66,6 +68,23 @@ update action model =
   case action of
     Input inputs ->
       noFx (updateModel model inputs)
+    MouseMove (x, y) ->
+      let
+        blob =
+          model.blob
+
+        (wx, wy) =
+          model.windowSize
+
+        newX =
+          x - wx // 2
+
+        newY = wy // 2 - y
+
+        newBlob =
+          { blob | position = (toFloat newX, toFloat newY) }
+      in
+        noFx { model | blob = newBlob }
 
 
 updateModel : Model -> Inputs -> Model
@@ -152,7 +171,9 @@ view address model =
       Food.view model.food
   in
     Html.div
-      []
+      [ Html.Events.on "mousemove"
+          (object2 (,) ("clientX" := int) ("clientY" := int))
+          (\xy -> Signal.message address (MouseMove xy)) ]
       [ Html.fromElement (collage wx wy (blob :: food))
       , Html.p [] [ Html.text ("Score: " ++ (toString model.score)) ]
       ]
