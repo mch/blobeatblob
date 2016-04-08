@@ -70,17 +70,14 @@ init width height numParticles =
     food =
       Food seed [] numParticles width height Nothing
   in
-    generateParticles food
+    generateParticles food numParticles
 
 
-generateParticles : Food -> Food
-generateParticles food =
+generateParticles : Food -> Int -> Food
+generateParticles food numParticles =
   let
     foodSize =
       10
-
-    numParticles =
-      food.maxNumParticles - (List.length food.particles)
 
     xgen =
       float (-1 * food.width / 2) (food.width / 2)
@@ -125,7 +122,7 @@ update food dt =
       if t > Time.second then
         let
           newFood =
-            generateParticles food
+            generateParticles food 1
         in
           { newFood | addFoodState = Nothing }
       else
