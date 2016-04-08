@@ -1,7 +1,6 @@
 module Main (..) where
 
 import Graphics.Collage exposing (..)
-import Color
 import Time
 import Keyboard
 import Effects
@@ -69,24 +68,31 @@ update action model =
     Input inputs ->
       noFx (updateModel model inputs)
     MouseMove (x, y) ->
-      let
-        blob =
-          model.blob
-
-        (wx, wy) =
-          model.windowSize
-
-        newX =
-          x - wx // 2
-
-        newY = wy // 2 - y
-
-        newBlob =
-          { blob | position = (toFloat newX, toFloat newY) }
-      in
-        noFx { model | blob = newBlob }
+      updateBlobPositionWithMouse model x y
+        |> noFx
 
 
+updateBlobPositionWithMouse : Model -> Int -> Int -> Model
+updateBlobPositionWithMouse model x y =
+  let
+    blob =
+      model.blob
+           
+    (wx, wy) =
+      model.windowSize
+                    
+    newX =
+      x - wx // 2
+                        
+    newY =
+      wy // 2 - y
+
+    newBlob =
+      { blob | position = (toFloat newX, toFloat newY) }
+  in
+    { model | blob = newBlob }
+
+      
 updateModel : Model -> Inputs -> Model
 updateModel model inputs =
   let
@@ -121,6 +127,32 @@ updateBlobPositionWithKeys model keys =
     { model | blob = newBlob }
 
 
+type alias Collidable = { position : (Float, Float), size : Float }
+
+-- Returns a list of pairs of objects that have collided
+detectCollisionsForCircles : List Collidable -> List ( Collidable, Collidable )
+detectCollisionsForCircles circles =
+  let
+    distance : ( Float, Float ) -> ( Float, Float ) -> Float
+    distance ( x1, y1 ) ( x2, y2 ) =
+      sqrt ((x1 - x2) ^ 2 + (y1 - y2) ^ 2)
+
+    didCollide : Collidable -> Collidable -> List (Collidable, Collidable)
+    didCollide c1 c2 =
+      if distance c1.position c2.position <= c1.size + c2.size then
+        [(c1, c2)]
+      else
+        []
+
+    checkPairs : List Collidable -> List (Collidable, Collidable)
+    checkPairs l =
+      case l of
+        h :: t -> List.append (List.concatMap (didCollide h) t) (checkPairs t)
+        [] -> []
+  in
+    Debug.log "collisions" (checkPairs circles)
+
+         
 detectCollisions : Model -> Model
 detectCollisions model =
   let
@@ -150,6 +182,8 @@ detectCollisions model =
 
     newBlob =
       { blob | size = blob.size + (toFloat points) }
+
+--    alternaImpl = detectCollisionsForCircles (model.blob :: model.food.particles)
   in
     { model
       | food = newFood
