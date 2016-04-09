@@ -79,13 +79,13 @@ updateBlobPositionWithMouse model x y =
   let
     blob =
       model.blob
-           
+
     (wx, wy) =
       model.windowSize
-                    
+
     newX =
       x - wx // 2
-                        
+
     newY =
       wy // 2 - y
 
@@ -94,12 +94,13 @@ updateBlobPositionWithMouse model x y =
   in
     { model | blob = newBlob }
 
-      
+
 updateModel : Model -> Inputs -> Model
 updateModel model inputs =
   let
     newModel =
       updateBlobPositionWithKeys model inputs
+        |> nudgeFood inputs
         |> detectCollisions
 
     newFood =
@@ -127,6 +128,45 @@ updateBlobPositionWithKeys model keys =
       { blob | position = ( newX, newY ) }
   in
     { model | blob = newBlob }
+
+
+nudgeFood : Inputs -> Model -> Model
+nudgeFood input model =
+  let
+    influenceSize =
+      20
+
+    (bx, by) =
+      model.blob.position
+
+    areaOfInfluence =
+      { position = model.blob.position
+      , radius = model.blob.radius + influenceSize
+      }
+
+    influence p =
+      if circlesDidCollide areaOfInfluence p then
+        let
+          (px, py) = p.position
+          vx = (bx - px) / 200
+          vy = (by - py) / 200
+        in
+        { p | velocity = (vx, vy) }
+      else
+        p
+
+    food =
+      model.food
+
+    updatedParticles =
+      List.map influence food.particles
+
+    updatedFood =
+      { food | particles = updatedParticles }
+
+  in
+    { model | food = updatedFood }
+
 
 
 detectCollisions : Model -> Model

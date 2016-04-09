@@ -21,6 +21,7 @@ type alias FoodParticle =
   , outlineColour : Color.Color
   , position : ( Float, Float )
   , radius : Float
+  , velocity : ( Float, Float )
   }
 
 
@@ -101,7 +102,7 @@ generateParticles food numParticles =
       List.map int2lightcolour colourIndexList
 
     particles =
-      List.map4 FoodParticle fillColourList outlineColourList pointList (List.repeat numParticles foodRadius)
+      List.map5 FoodParticle fillColourList outlineColourList pointList (List.repeat numParticles foodRadius) (List.repeat numParticles (0, 0))
   in
     { food
       | particles = particles ++ food.particles
@@ -111,6 +112,32 @@ generateParticles food numParticles =
 
 update : Food -> Time.Time -> Food
 update food dt =
+  updateParticlePositions dt food
+    |> updateNumberOfParticles dt
+
+
+updateParticlePositions : Time.Time -> Food -> Food
+updateParticlePositions dt food =
+  let
+    updateParticle p =
+      let
+        (px, py) =
+          p.position
+
+        (vx, vy) =
+          p.velocity
+      in
+        { p | position = (px + vx * dt, py + vy * dt) }
+
+
+    updatedParticles =
+      List.map updateParticle food.particles
+  in
+    { food | particles = updatedParticles }
+
+
+updateNumberOfParticles : Time.Time -> Food -> Food
+updateNumberOfParticles dt food =
   case food.addFoodState of
     Nothing ->
       if List.length food.particles < 20 then
