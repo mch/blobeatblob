@@ -1,29 +1,51 @@
 module Collidable (..) where
 
-type alias Collidable a =
-  { a | position : (Float, Float), size : Float }
 
--- Returns a list of pairs of objects that have collided. Maybe this
--- could take a function that can immedietly determine what to do with
--- these pairs to avoid additional list traversals later.
-detectCollisionsForCircles : List (Collidable a) -> List (Collidable a, Collidable a)
-detectCollisionsForCircles circles =
+type alias BoundingCircle a =
+  { a
+    | position : (Float, Float)
+    , radius : Float }
+
+
+type alias BoundingBox a =
+  { a
+    | position : (Float, Float)
+    , width : Float
+    , height : Float }
+
+
+circlesDidCollide : BoundingCircle a -> BoundingCircle b -> Bool
+circlesDidCollide c1 c2 =
   let
-    distance : ( Float, Float ) -> ( Float, Float ) -> Float
-    distance ( x1, y1 ) ( x2, y2 ) =
-      sqrt ((x1 - x2) ^ 2 + (y1 - y2) ^ 2)
+    distanceSquared : ( Float, Float ) -> ( Float, Float ) -> Float
+    distanceSquared ( x1, y1 ) ( x2, y2 ) =
+      (x1 - x2) ^ 2 + (y1 - y2) ^ 2
 
-    didCollide : Collidable a -> Collidable a -> List ( Collidable a, Collidable a )
-    didCollide c1 c2 =
-      if distance c1.position c2.position <= c1.size + c2.size then
-        [(c1, c2)]
-      else
-        []
-
-    checkPairs : List (Collidable a) -> List (Collidable a, Collidable a)
-    checkPairs l =
-      case l of
-        h :: t -> List.append (List.concatMap (didCollide h) t) (checkPairs t)
-        [] -> []
+    collisionDistanceSquared = (c1.radius + c2.radius) ^ 2
   in
-    Debug.log "collisions" (checkPairs circles)
+    (distanceSquared c1.position c2.position) <= collisionDistanceSquared
+
+
+boxesDidCollide : BoundingBox a -> BoundingBox b -> Bool
+boxesDidCollide b1 b2 =
+  let
+    (bx1, by1) =
+      b1.position
+
+    (bx2, by2) =
+      b2.position
+
+    touchingAlongX =
+      if bx1 < bx2 then
+        (bx1 + b1.width / 2) >= (bx2 - b2.width / 2)
+      else
+        (bx2 + b2.width / 2) >= (bx1 - b1.width / 2)
+
+    touchingAlongY =
+      if by1 < by2 then
+        (by1 + b1.height / 2) >= (by2 - b2.height / 2)
+      else
+        (by2 + b2.height / 2) >= (by1 - b1.height / 2)
+
+  in
+    touchingAlongX && touchingAlongY
