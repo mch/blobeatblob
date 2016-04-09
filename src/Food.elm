@@ -20,7 +20,7 @@ type alias FoodParticle =
   { fillColour : Color.Color
   , outlineColour : Color.Color
   , position : ( Float, Float )
-  , size : Float
+  , radius : Float
   }
 
 
@@ -76,7 +76,7 @@ init width height numParticles =
 generateParticles : Food -> Int -> Food
 generateParticles food numParticles =
   let
-    foodSize =
+    foodRadius =
       10
 
     xgen =
@@ -101,7 +101,7 @@ generateParticles food numParticles =
       List.map int2lightcolour colourIndexList
 
     particles =
-      List.map4 FoodParticle fillColourList outlineColourList pointList (List.repeat numParticles foodSize)
+      List.map4 FoodParticle fillColourList outlineColourList pointList (List.repeat numParticles foodRadius)
   in
     { food
       | particles = particles ++ food.particles
@@ -138,12 +138,12 @@ drawParticle : FoodParticle -> Form
 drawParticle particle =
   let
     outer =
-      circle particle.size
+      circle particle.radius
         |> filled particle.outlineColour
         |> move particle.position
 
     inner =
-      circle (particle.size - 2)
+      circle (particle.radius - 2)
         |> filled particle.fillColour
         |> move particle.position
   in

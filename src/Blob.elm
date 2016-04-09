@@ -6,10 +6,10 @@ import Color
 
 type alias Blob =
   { position : ( Float, Float )
-  , size : Float
+  , radius : Float
   }
 
 
 view : Blob -> Form
 view b =
-  move b.position (filled Color.darkBlue (circle b.size))
+  move b.position (filled Color.darkBlue (circle b.radius))

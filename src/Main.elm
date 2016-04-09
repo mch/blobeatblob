@@ -12,6 +12,8 @@ import StartApp exposing (start)
 import Food
 import Blob
 import Json.Decode exposing ((:=), int, object2)
+import Collidable exposing (circlesDidCollide)
+
 
 type alias Model =
   { windowSize : ( Int, Int )
@@ -130,39 +132,28 @@ updateBlobPositionWithKeys model keys =
 detectCollisions : Model -> Model
 detectCollisions model =
   let
-    ( bx, by ) =
-      model.blob.position
-
-    distance ( fx, fy ) =
-      sqrt ((bx - fx) ^ 2 + (by - fy) ^ 2)
-
-    didCollide f =
-      (distance f.position) > (f.size + model.blob.size)
-
-    newParticles =
-      List.filter didCollide model.food.particles
+    remainingParticles =
+      List.filter (\p -> not (circlesDidCollide model.blob p)) model.food.particles
 
     food =
       model.food
 
-    newFood =
-      { food | particles = newParticles }
+    updatedFood =
+      { food | particles = remainingParticles }
 
     points =
-      (List.length model.food.particles) - (List.length newParticles)
+      (List.length model.food.particles) - (List.length remainingParticles)
 
     blob =
       model.blob
 
-    newBlob =
-      { blob | size = blob.size + (toFloat points) }
-
---    alternaImpl = detectCollisionsForCircles (model.blob :: model.food.particles)
+    updatedBlob =
+      { blob | radius = blob.radius + (toFloat points) }
   in
     { model
-      | food = newFood
+      | food = updatedFood
       , score = model.score + points
-      , blob = newBlob
+      , blob = updatedBlob
     }
 
 
